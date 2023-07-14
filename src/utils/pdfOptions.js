@@ -4,7 +4,7 @@ module.exports = options = {
     border: "10mm",
     header: {
         height: "45mm",
-        contents: '<div style="text-align: center;">Author: Shyam Hajare</div>'
+        // contents: '<div style="text-align: center;">Página: {{page}}</div>'
     },
     footer: {
         height: "28mm",

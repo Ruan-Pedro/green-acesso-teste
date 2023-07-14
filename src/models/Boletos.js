@@ -31,7 +31,8 @@ const Boletos = Connection.define(
     },
     criado_em: {
       type: Sequelize.DATE,
-      allowNull: true,
+      allowNull: false,
+      defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
     },
   },
   {

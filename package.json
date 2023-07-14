@@ -25,6 +25,7 @@
     "mysql2": "^3.5.1",
     "nodemon": "^3.0.1",
     "pdf-creator-node": "^2.3.5",
+    "pdfjs-dist": "^3.8.162",
     "sequelize": "^6.32.1",
     "yarn": "^1.22.19"
   }
