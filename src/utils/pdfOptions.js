@@ -1,3 +1,4 @@
+//opções da documentação da biblioteca node-pdf-creator
 module.exports = options = {
     format: "A4",
     orientation: "portrait",
@@ -10,7 +11,7 @@ module.exports = options = {
         height: "28mm",
         contents: {
             first: 'Cover page',
-            2: 'Second page', // Any page number is working. 1-based index
+            2: 'Second page',
             default: '<span style="color: #444;">{{page}}</span>/<span>{{pages}}</span>', // fallback value
             last: 'Last Page'
         }
