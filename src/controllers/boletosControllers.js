@@ -11,8 +11,10 @@ const pdfjs = require("pdfjs-dist");
 
 const getBoletos = async (req, res) => {
   try {
+    //variaveis de filtro e em seguida suas logicas
     const { nome, valor_inicial, valor_final, id_lote, relatorio } = req.query;
 
+    //Se tiver o filtro relatorio = 1, a função retorna um base64 do arquivo pdf dos boletos, se não retorna os dados dos boletos e seus filtros
     if (relatorio && relatorio == 1) {
       let boletos = await Boletos.findAll({ raw: true });
       const templatePath = path.resolve(
@@ -69,8 +71,10 @@ const getBoletos = async (req, res) => {
   }
 };
 
+//Importa os dados do arquivo .csv
 const importData = async (req, res) => {
-  const file = req.file.buffer;
+  try {
+    const file = req.file.buffer;
   const readableFile = new Readable();
   readableFile.push(file);
   readableFile.push(null);
@@ -78,7 +82,7 @@ const importData = async (req, res) => {
   const lines = ReadLine.createInterface({
     input: readableFile,
   });
-
+  //lê e formata o dado de cada linha
   for await (let line of lines) {
     if (line.split(";")[0] == "nome") {
       continue;
@@ -87,7 +91,7 @@ const importData = async (req, res) => {
       let lote = await Lotes.findOne({
         where: { nome: { [Op.like]: `%${unidade}%` } },
       });
-
+      //insere no banco
       await Boletos.create({
         nome_sacado: nome || "",
         id_lote: lote.dataValues.id,
@@ -97,10 +101,13 @@ const importData = async (req, res) => {
       });
     }
   }
-
   return res.status(200).json({ msg: "dados cadastrados com sucesso" });
+  } catch (error) {
+    return res.status(200).json({ error });
+  }
 };
 
+//Gera o pdf do sindico se necessário
 const generatePdfSindico = async (req, res) => {
   const templatePath = path.resolve(
     __dirname,
@@ -111,7 +118,6 @@ const generatePdfSindico = async (req, res) => {
     html,
     data: {
       boletos: [
-        //ou boletos para ler todos os boletos
         {
           nome: "MARCIA CARVALHO",
           id_lote: 7,
@@ -147,6 +153,7 @@ const generatePdfSindico = async (req, res) => {
     });
 };
 
+//Lê o pdf do sindico e salva pdfs dos boletos de cada pessoa
 const readPDF = async (req, res) => {
   try {
     const pdfToReadPath = path.resolve(
@@ -164,6 +171,7 @@ const readPDF = async (req, res) => {
     let PDFDados = new Array();
     let resultadoFinal = new Array();
 
+    //Leitura de cada pagina do pdf
     for (let pageNumber = 1; pageNumber <= numPages; pageNumber++) {
       const page = await pdfToCreate.getPage(pageNumber);
       const textContent = await page.getTextContent();
@@ -184,7 +192,7 @@ const readPDF = async (req, res) => {
       
      PDFDados.push(dadosFormatados);
     }
-
+    //Comparação com os dados do banco, se bater, salva na pasta /temp
     for (let i = 0; i < PDFDados.length; i++) {
       const pdfData = PDFDados[i];
 
