@@ -35,7 +35,6 @@ const getBoletos = async (req, res) => {
           res.status(200).json({base64});
         })
         .catch((err) => {
-          console.error(err);
           res.status(500).json({ error: err });
         });
     } else {
@@ -61,12 +60,10 @@ const getBoletos = async (req, res) => {
           [Op.lte]: parseFloat(valor_final),
         };
       }
-
       const boletos = await Boletos.findAll({ where: filters, raw: true });
       res.status(200).json({ data: boletos });
     }
   } catch (error) {
-    console.error("Erro ao buscar os boletos:", err);
     res.status(500).json({ error: err });
   }
 };
