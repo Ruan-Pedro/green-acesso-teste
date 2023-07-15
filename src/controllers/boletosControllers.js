@@ -11,33 +11,58 @@ const pdfjs = require("pdfjs-dist");
 
 const getBoletos = async (req, res) => {
   try {
-    const { nome, valor_inicial, valor_final, id_lote } = req.query;
+    const { nome, valor_inicial, valor_final, id_lote, relatorio } = req.query;
 
-    const filters = {};
-    if (id_lote) filters.id_lote = id_lote;
+    if (relatorio && relatorio == 1) {
+      let boletos = await Boletos.findAll({ raw: true });
+      const templatePath = path.resolve(
+        __dirname,
+        "../public/template_boletos.html"
+      );
+      let html = fs.readFileSync(templatePath, "utf8");
+      let document = {
+        html,
+        data: {boletos},
+        path: path.resolve(__dirname, `../temp/boletos.pdf`),
+        type: "",
+      };
+      pdf
+        .create(document, optionsPDF)
+        .then((result) => {
+          let base64 = fs.readFileSync(result.filename, { encoding: "base64" });
+          res.status(200).json({base64});
+        })
+        .catch((err) => {
+          console.error(err);
+          res.status(500).json({ error: err });
+        });
+    } else {
+      const filters = {};
+      if (id_lote) filters.id_lote = id_lote;
 
-    if (nome) {
-      filters.nome_sacado = {
-        [Op.like]: `%${nome}%`,
-      };
-    };
+      if (nome) {
+        filters.nome_sacado = {
+          [Op.like]: `%${nome}%`,
+        };
+      }
 
-    if (valor_inicial && valor_final) {
-      filters.valor = {
-        [Op.between]: [parseFloat(valor_inicial), parseFloat(valor_final)],
-      };
-    } else if (valor_inicial) {
-      filters.valor = {
-        [Op.gte]: parseFloat(valor_inicial),
-      };
-    } else if (valor_final) {
-      filters.valor = {
-        [Op.lte]: parseFloat(valor_final),
-      };
+      if (valor_inicial && valor_final) {
+        filters.valor = {
+          [Op.between]: [parseFloat(valor_inicial), parseFloat(valor_final)],
+        };
+      } else if (valor_inicial) {
+        filters.valor = {
+          [Op.gte]: parseFloat(valor_inicial),
+        };
+      } else if (valor_final) {
+        filters.valor = {
+          [Op.lte]: parseFloat(valor_final),
+        };
+      }
+
+      const boletos = await Boletos.findAll({ where: filters, raw: true });
+      res.status(200).json({ data: boletos });
     }
-    
-    const boletos = await Boletos.findAll({ where: filters, raw: true });
-    res.status(200).json({ data:boletos });
   } catch (error) {
     console.error("Erro ao buscar os boletos:", err);
     res.status(500).json({ error: err });
@@ -77,13 +102,11 @@ const importData = async (req, res) => {
 };
 
 const generatePdfSindico = async (req, res) => {
-  // let html = fs.readFileSync("../../src/temp/template.html");
   const templatePath = path.resolve(
     __dirname,
     "../public/template_sindico.html"
   );
   let html = fs.readFileSync(templatePath, "utf8");
-  // let boletos = await Boletos.findAll({ raw: true });
   let document = {
     html,
     data: {
@@ -140,6 +163,7 @@ const readPDF = async (req, res) => {
     let boletosBanco = await Boletos.findAll({ raw: true });
     let PDFDados = new Array();
     let resultadoFinal = new Array();
+
     for (let pageNumber = 1; pageNumber <= numPages; pageNumber++) {
       const page = await pdfToCreate.getPage(pageNumber);
       const textContent = await page.getTextContent();
@@ -151,19 +175,20 @@ const readPDF = async (req, res) => {
           return { [key.trim()]: value.trim() };
         });
 
-      let dadosFormatados = {};
+      let dadosFormatados = new Object();
       for (let i = 0; i < pageText.length; i++) {
         const key = Object.keys(pageText[i])[0];
         const value = pageText[i][key];
-
         dadosFormatados[key] = value;
       }
-      PDFDados.push(dadosFormatados);
+      
+     PDFDados.push(dadosFormatados);
     }
 
     for (let i = 0; i < PDFDados.length; i++) {
       const pdfData = PDFDados[i];
-      for await (const element of boletosBanco) {
+
+      for await (let element of boletosBanco) {
         if (pdfData.Name == element.nome_sacado) {
           let document = {
             html,
@@ -191,5 +216,5 @@ module.exports = {
   importData,
   generatePdfSindico,
   readPDF,
-  getBoletos,
+  getBoletos
 };

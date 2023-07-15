@@ -12,13 +12,15 @@ router.get('/', (req,res) => {
 //TESTE
 router.get('/ping', (req, res) => res.send('pong'));
 
-//GETS (ATIVIDADE 4)
-router.get('/boletos', BoletosControllers.getBoletos);
-
-//ARQUIVOS (ATIVIDADES 1,2,3)
+//ARQUIVOS (ATIVIDADES 1 - 3)
 router.get('/import', multerConfig.single("file"), BoletosControllers.importData);
 router.get('/pdf', BoletosControllers.generatePdfSindico);
 router.get('/pdfread', BoletosControllers.readPDF);
+
+//GETS (ATIVIDADE 4 - 5)
+router.get('/boletos', BoletosControllers.getBoletos);
+
+
 
 
 module.exports = router;
